@@ -16,12 +16,10 @@ print(os.getenv('HUGGINGFACE_API'))
 
 st.title('Sentiment Analysis Tool')
 
-st.subheader('Vader Sentiment')
+st.subheader('HELLO USER')
 
 text = st.text_input('Enter a comment')
 click=st.button('Compute')
-
-print(text)
 
 def senti(text):
     obj=SentimentIntensityAnalyzer()
@@ -35,13 +33,11 @@ def senti(text):
         st.write("🙂 Neutral")
         
 
-
-st.header("Hate speech classification")
-
 import requests
 
 API_URL = "https://api-inference.huggingface.co/models/j-hartmann/emotion-english-distilroberta-base"
-headers = {"Authorization": "Bearer " + st.secrets["HUGGINGFACE_API"]}
+
+headers = {"Authorization": "Bearer " + os.getenv('HUGGINGFACE_API')}
 
 def query(payload):
 	response = requests.post(API_URL, headers=headers, json=payload)
@@ -56,27 +52,44 @@ def senti_class(text):
     if text:
         for data in output:
             print(data)
-    st.write(output)
+    st.write("Emotion Table")
+    print("this is output ")
+    print(output)
+    st.table(pd.DataFrame(output[0]))
+
+
     return output
 
-def viz(o):
+def viz(o,text):
+    obj=SentimentIntensityAnalyzer()
+    senti_dict=obj.polarity_scores(text)
+    sentidict=[]
+    sentidict.append(senti_dict)
+    st.write("Sentiment Table")
+    st.table(pd.DataFrame(sentidict))
     labels = [item['label'] for item in o[0]]
     scores = [item['score'] for item in o[0]]
-
+    labels.append('Neutral')
+    labels.append('positive')
+    labels.append('negative')
+    scores.append(senti_dict['neu'])
+    scores.append(senti_dict['pos'])
+    scores.append(senti_dict['neg'])
     fig = px.bar(x=labels, y=scores)
-
+    fig2 = px.pie(names=labels, values=scores)
     fig.update_layout(
-        title="Emotional Scores",
+        title="Sentiment Analysis",
         xaxis_title="Emotion",
         yaxis_title="Score"
     )
 
     st.plotly_chart(fig)
+    st.plotly_chart(fig2)
 
 if click:
     senti(text)
     o=senti_class(text)
-    viz(o)
+    viz(o,text)
 
 
 # output = query({
